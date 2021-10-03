@@ -1,0 +1,41 @@
+{
+  "name": "RFE5-sdc-lunafreya",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "clean": "rm dist/bundle.js",
+    "build-dev": "webpack --mode development --watch",
+    "build-prod": "webpack --mode production --watch",
+    "test": "jest",
+    "start": "npx nodemon server/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rfe5-SDC-lunafreya/RFE5-sdc-lunafreya.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rfe5-SDC-lunafreya/RFE5-sdc-lunafreya/issues"
+  },
+  "homepage": "https://github.com/rfe5-SDC-lunafreya/RFE5-sdc-lunafreya#readme",
+  "devDependencies": {
+    "@babel/core": "^7.15.5",
+    "@babel/plugin-transform-runtime": "^7.15.0",
+    "@babel/preset-env": "^7.15.6",
+    "babel-jest": "^27.2.2",
+    "babel-loader": "^8.2.2",
+    "jest": "^27.2.2",
+    "webpack": "^5.54.0",
+    "webpack-cli": "^4.8.0"
+  },
+  "dependencies": {
+    "axios": "^0.21.4",
+    "express": "^4.17.1",
+    "mongoose": "^6.0.8",
+    "morgan": "^1.10.0",
+    "nodemon": "^2.0.13"
+  }
+}
