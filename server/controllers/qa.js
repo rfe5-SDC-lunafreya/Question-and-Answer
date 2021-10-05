@@ -37,8 +37,8 @@ class QAController {
       );
       res.status(200).json({
         question: question_id,
-        page,
-        count,
+        page: page || 1,
+        count: count || 5,
         results: answers,
       });
     } catch (err) {

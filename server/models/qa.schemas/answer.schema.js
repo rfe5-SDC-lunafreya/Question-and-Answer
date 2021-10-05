@@ -19,7 +19,6 @@ const AnswerSchema = new mongoose.Schema({
     default: 0,
   },
 });
-AnswerSchema.index({ id: 1 }, { unique: true });
 
 const AnswerModel = mongoose.model("answer", AnswerSchema);
 

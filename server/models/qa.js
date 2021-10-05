@@ -3,7 +3,7 @@ const AnswerPhotoModel = require("./qa.schemas/answer-photo.schema");
 const QuestionModel = require("./qa.schemas/question.schema");
 // connect to mongodb use mongoose
 const mongoose = require("mongoose");
-mongoose.connect("mongodb://localhost:27017/shop");
+mongoose.connect("mongodb://localhost:27017/shop", { autoIndex: false });
 
 class QAService {
   constructor() {}
@@ -17,31 +17,58 @@ class QAService {
     count = count || 5;
 
     product_id = Number(product_id);
+    let questions = await QuestionModel.aggregate([
+      { $match: { product_id, reported: false } },
+      { $skip: (page - 1) * count },
+      { $limit: count },
+      {
+        $lookup: {
+          from: "answers",
+          localField: "id",
+          foreignField: "question_id",
+          as: "answers",
+        },
+      },
+      {
+        $unwind: {
+          path: "$answers",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "answers_photos",
+          localField: "answers.id",
+          foreignField: "answer_id",
+          as: "answers.photos",
+        },
+      },
+      {
+        $group: {
+          _id: "$_id",
+          question: { $first: "$$ROOT" },
+          answers: { $push: "$answers" },
+        },
+      },
+      {
+        $replaceRoot: {
+          newRoot: {
+            $mergeObjects: ["$question", { answers: "$answers" }],
+          },
+        },
+      },
+    ]);
+    questions.forEach((question) => {
+      const questionAnswers = question.answers;
+      question.answers = {};
 
-    let questions = await QuestionModel.find({
-      product_id,
-      reported: false,
-    })
-      .skip((page - 1) * count)
-      .limit(count)
-      .lean();
-    const questionsAnswers = await Promise.all(
-      questions.map((question) => {
-        return AnswerModel.find({
-          question_id: question.id,
-          reported: false,
-        });
-      })
-    );
-    questions = questions.map((question, index) => {
-      let result = question;
-      const answers = questionsAnswers[index];
-      result.answers = {};
-      answers.forEach((answer) => {
-        result.answers[answer.id] = answer;
+      questionAnswers.forEach((answer) => {
+        if (answer.id) {
+          question.answers[answer.id] = answer;
+        }
       });
-      return result;
     });
+    questions.sort((prev, next) => prev.id - next.id);
     return questions;
   }
 
@@ -114,14 +141,21 @@ class QAService {
 
   async createAnswer(question_id, body, name, email, photos) {
     question_id = Number(question_id);
-    const maxIDData = await AnswerModel.find().sort({ _id: -1 }).limit(1);
+    const maxIDData = await AnswerModel.find()
+      .sort({ _id: -1 })
+      .limit(1)
+      .lean();
 
-    const maxID =
-      (Array.isArray(maxIDData) &&
-        maxIDData.length > 0 &&
-        Number(maxIDData[0].id)) ||
+    const maxAnswerIDs = await AnswerModel.find()
+      .sort({ id: -1 })
+      .limit(1)
+      .lean();
+    const maxAnswerID =
+      (Array.isArray(maxAnswerIDs) &&
+        maxAnswerIDs.length === 1 &&
+        maxAnswerIDs[0].id) ||
       0;
-    const answerID = maxID + 1;
+    const answerID = maxAnswerID + 1;
     await AnswerModel.create({
       id: answerID,
       question_id,
